@@ -1,0 +1,36 @@
+@import "tailwindcss";
+
+@theme {
+  --font-headline: var(--font-headline), "Space Grotesk", sans-serif;
+  --font-body: var(--font-body), "Inter", sans-serif;
+  
+  --color-primary: #97cbff;
+  --color-on-primary: #003353;
+  --color-secondary: #ffb4a8;
+  --color-on-secondary: #690000;
+  --color-surface: #131313;
+  --color-surface-container: #202020;
+  --color-surface-container-low: #1b1b1c;
+  --color-surface-container-high: #2a2a2a;
+  --color-surface-container-highest: #353535;
+  --color-on-surface: #e5e2e1;
+  --color-on-surface-variant: #bfc7d3;
+  --color-outline-variant: #3f4851;
+  --color-secondary-container: #c00000;
+  --color-on-secondary-container: #ffcdc5;
+}
+
+@layer base {
+  body {
+    @apply bg-surface text-on-surface font-body;
+  }
+}
+
+.glass-effect {
+  background: rgba(53, 53, 53, 0.6);
+  backdrop-filter: blur(20px);
+}
+
+.kinetic-gradient {
+  background: linear-gradient(135deg, #1697e7 0%, #97cbff 100%);
+}
