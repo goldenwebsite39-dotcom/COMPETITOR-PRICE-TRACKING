@@ -1,0 +1,118 @@
+// ===============================================================
+// Assumed Data Model
+// ===============================================================
+//
+// Collection: products
+// Document ID: {productId}
+// Fields:
+//   - name: string (required) - Product name
+//   - sku: string (required) - Unique SKU or model number
+//   - category: string (required) - Product category
+//   - costPrice: number (required) - Acquisition cost
+//   - currentPrice: number (required) - Current selling price
+//   - image: string (optional) - Product image URL
+//
+// Collection: competitor_prices
+// Document ID: {priceId}
+// Fields:
+//   - productId: string (required) - Reference to Product ID
+//   - competitorName: string (required) - Name of competitor
+//   - price: number (required) - Price found
+//   - url: string (required) - URL to product page
+//   - timestamp: string (required, date-time) - When fetched
+//
+// Collection: alerts
+// Document ID: {alertId}
+// Fields:
+//   - type: string (required, enum: critical, market, inventory, rule)
+//   - title: string (required) - Alert title
+//   - description: string (required) - Detailed message
+//   - productId: string (optional) - Product reference
+//   - marketAvg: number (optional) - Market average
+//   - yourPrice: number (optional) - Current price
+//   - volatility: number (optional) - Volatility index
+//   - timestamp: string (required, date-time) - When generated
+//
+// ===============================================================
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() &&
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+          (request.auth.token.email == "goldenwebsite39@gmail.com" && request.auth.token.email_verified == true));
+    }
+
+    function hasRequiredFields(fields) {
+      return request.resource.data.keys().hasAll(fields);
+    }
+
+    function hasOnlyAllowedFields(fields) {
+      return request.resource.data.keys().hasOnly(fields);
+    }
+
+    // ===============================================================
+    // Domain Validators
+    // ===============================================================
+
+    function isValidProduct(data) {
+      return hasRequiredFields(['name', 'sku', 'category', 'costPrice', 'currentPrice']) &&
+             data.name is string && data.name.size() > 0 && data.name.size() < 200 &&
+             data.sku is string && data.sku.size() > 0 && data.sku.size() < 50 &&
+             data.category is string &&
+             data.costPrice is number && data.costPrice >= 0 &&
+             data.currentPrice is number && data.currentPrice >= 0;
+    }
+
+    function isValidCompetitorPrice(data) {
+      return hasRequiredFields(['productId', 'competitorName', 'price', 'url', 'timestamp']) &&
+             data.productId is string &&
+             data.competitorName is string &&
+             data.price is number && data.price >= 0 &&
+             data.url is string &&
+             data.timestamp is string;
+    }
+
+    function isValidAlert(data) {
+      return hasRequiredFields(['type', 'title', 'description', 'timestamp']) &&
+             data.type in ['critical', 'market', 'inventory', 'rule'] &&
+             data.title is string && data.title.size() > 0 &&
+             data.description is string &&
+             data.timestamp is string;
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    match /users/{userId} {
+      allow read: if isAuthenticated() && (request.auth.uid == userId || isAdmin());
+      allow write: if isAdmin();
+    }
+
+    match /products/{productId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin() && isValidProduct(request.resource.data);
+    }
+
+    match /competitor_prices/{priceId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin() && isValidCompetitorPrice(request.resource.data);
+    }
+
+    match /alerts/{alertId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin() && isValidAlert(request.resource.data);
+    }
+  }
+}

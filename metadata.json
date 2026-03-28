@@ -1,0 +1,7 @@
+{
+  "name": "Golden Cloud Price Tracker",
+  "description": "Competitor-based price tracking and AI-driven smart pricing system for eCommerce.",
+  "requestFramePermissions": [
+    "geolocation"
+  ]
+}
